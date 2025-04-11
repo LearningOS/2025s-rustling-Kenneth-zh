@@ -2,7 +2,6 @@
     queue
     This question requires you to use queues to implement the functionality of the stac
 */
-// I AM NOT DONE
 
 #[derive(Debug)]
 pub struct Queue<T> {
@@ -64,42 +63,28 @@ impl<T> myStack<T> {
             q2: Queue::<T>::new(),
         }
     }
+
     pub fn push(&mut self, elem: T) {
         self.q1.enqueue(elem);
     }
-
-    /*pub fn pop(&mut self) -> Result<T, &str> {
-        //TODO
-        if self.q1.is_empty() {
-            return Err("Stack is empty");
-        }
-
-        {
-            while self.q1.size() > 1 {
-                let elem = self.q1.dequeue().unwrap();
-                self.q2.enqueue(elem);
-            }
-        }
-
-        let result = self.q1.dequeue();
-
-        std::mem::swap(&mut self.q1, &mut self.q2);
-
-        result
-    }*/
 
     pub fn pop(&mut self) -> Result<T, &str> {
         if self.q1.is_empty() {
             return Err("Stack is empty");
         }
 
-        // 弹出 q1 中的最后一个元素
-        let result = { self.q1.dequeue() };
+        while let Some(value) = self.q1.dequeue().ok() {
+            if self.q1.is_empty() {
+                std::mem::swap(&mut self.q1, &mut self.q2);
+                return Ok(value);
+            }
+            self.q2.enqueue(value);
+        }
 
-        // 交换 q1 和 q2，使 q1 始终是主队列
+        // 交换 q1 和 q2
         std::mem::swap(&mut self.q1, &mut self.q2);
 
-        result
+        Err("Unexpected error")
     }
 
     pub fn is_empty(&self) -> bool {
