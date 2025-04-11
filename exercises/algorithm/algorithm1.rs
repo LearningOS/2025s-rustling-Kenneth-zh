@@ -2,7 +2,6 @@
     single linked list merge
     This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -26,13 +25,13 @@ struct LinkedList<T> {
     end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
+impl<T: Ord> Default for LinkedList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> LinkedList<T> {
+impl<T: Ord> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             length: 0,
@@ -66,12 +65,71 @@ impl<T> LinkedList<T> {
             },
         }
     }
-    pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self {
+    /*pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self {
         //TODO
-        Self {
-            length: 0,
-            start: None,
-            end: None,
+        let merged = LinkedList::<T>::new();
+        for index in 0..list_a.length {
+            merged.add((list_a.get(index as i32)).unwrap());
+        }
+        for index in 0..list_b.length {
+            merged.add((list_b.get(index as i32)).unwrap());
+        }
+        merged
+    }*/
+
+    pub fn merge(mut list_a: LinkedList<T>, mut list_b: LinkedList<T>) -> Self {
+        let mut merged_list = LinkedList::new();
+
+        // 获取两个链表的起始节点
+        let mut node_a = list_a.start.take();
+        let mut node_b = list_b.start.take();
+
+        // 合并两个链表
+        while let (Some(ptr_a), Some(ptr_b)) = (node_a, node_b) {
+            unsafe {
+                if (*ptr_a.as_ptr()).val <= (*ptr_b.as_ptr()).val {
+                    let next_a = (*ptr_a.as_ptr()).next.take();
+                    merged_list.append_node(ptr_a);
+                    node_a = next_a;
+                } else {
+                    let next_b = (*ptr_b.as_ptr()).next.take();
+                    merged_list.append_node(ptr_b);
+                    node_b = next_b;
+                }
+            }
+        }
+
+        // 如果 `list_a` 还有剩余节点，直接链接到合并链表中
+        while let Some(ptr_a) = node_a {
+            unsafe {
+                let next_a = (*ptr_a.as_ptr()).next.take();
+                merged_list.append_node(ptr_a);
+                node_a = next_a;
+            }
+        }
+
+        // 如果 `list_b` 还有剩余节点，直接链接到合并链表中
+        while let Some(ptr_b) = node_b {
+            unsafe {
+                let next_b = (*ptr_b.as_ptr()).next.take();
+                merged_list.append_node(ptr_b);
+                node_b = next_b;
+            }
+        }
+
+        merged_list
+    }
+
+    // 辅助方法：将节点直接追加到链表末尾
+    fn append_node(&mut self, node: NonNull<Node<T>>) {
+        unsafe {
+            if let Some(end_ptr) = self.end {
+                (*end_ptr.as_ptr()).next = Some(node);
+            } else {
+                self.start = Some(node);
+            }
+            self.end = Some(node);
+            self.length += 1;
         }
     }
 }
