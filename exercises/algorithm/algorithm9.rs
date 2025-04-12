@@ -2,10 +2,10 @@
     heap
     This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
 
 use std::cmp::Ord;
 use std::default::Default;
+use std::mem::swap;
 
 pub struct Heap<T>
 where
@@ -37,8 +37,25 @@ where
     }
 
     pub fn add(&mut self, value: T) {
+        //TODO
         self.count += 1;
         self.items.push(value);
+        let mut idx = self.count;
+        while idx > 1 {
+            let parent = self.parent_idx(idx);
+            /*if (self.comparator)(&self.items[idx], &self.items[parent]) {
+                self.items.swap(idx, parent);
+                idx = parent;
+            } else {
+                break;
+            }*/
+            if (self.comparator)(&self.items[idx], &self.items[parent]) {
+                self.items.swap(idx, parent);
+                idx = parent;
+            } else {
+                break;
+            }
+        }
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -59,7 +76,18 @@ where
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
         //TODO
-        0
+        let left = self.left_child_idx(idx);
+        let right = self.right_child_idx(idx);
+
+        if right > self.count {
+            // 如果没有右子节点，返回左子节点
+            left
+        } else if (self.comparator)(&self.items[left], &self.items[right]) {
+            // 比较左右子节点，返回较小的一个（或较大的一个，取决于堆类型）
+            left
+        } else {
+            right
+        }
     }
 }
 
@@ -80,13 +108,35 @@ where
 
 impl<T> Iterator for Heap<T>
 where
-    T: Default,
+    T: Default + Clone,
 {
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
         //TODO
-        None
+        if self.count == 0 {
+            return None;
+        }
+
+        let result = self.items[1].clone();
+
+        let last = self.items.pop().unwrap();
+        self.count -= 1;
+        self.items[1] = last;
+
+        let mut idx = 1;
+
+        while self.children_present(idx) {
+            let smallest = self.smallest_child_idx(idx);
+            if (self.comparator)(&self.items[smallest], &self.items[idx]) {
+                self.items.swap(smallest, idx);
+                idx = smallest;
+            } else {
+                break;
+            }
+        }
+
+        return Some(result);
     }
 }
 
